@@ -35,15 +35,7 @@ plot(t, y)
 
 %%
 
-for i = 1:5
-    e(i) = Y{i}(end) - Y{6}(end);
-    h = 1./k_max_vec;
-end
-
-loglog(h(1:5), abs(e))
-
-
-%%
-
+for i =
+    e = Y{} Y{6}(end) 
 
 
