@@ -1,173 +1,235 @@
-%PART 1
+%% PART 1
 
-%definiendum & definiens
+BC = "sin";
+% BC = "square";
 
-BC = 1; % sätts till nummer av rand värde
-x_max= 2; tau=1; t_max= 2*tau; N=100;  a=1;
-sigm = 0.8; % sigma is the corrant number
-% startar på 0 i index och går till
+sigma = 0.5;     
+% sigma is the courant number
+% For 0 < sigma <= 1 
+% All three methods are stable in this region
+% This is in accorance with the theoretical results 
+% We have the same stability region for square and sine BC 
+% The Upwind and Lax Fredrich methods gives smeared numerical solutions 
+% The The Lax Wendroff introduce oscillations for square BC 
+% The best method for the sin BC is the upwind method 
+% The best method for the square BC is the lax wendroff
 
-h_x = x_max/N;
-h_t = (sigm/a) *  h_x;  
+[u0, x_vec, t_vec] = get_u0(BC, sigma);
 
-t_vec = 0:h_t:t_max;
-x_vec = 0:h_x:x_max;
+N = length(x_vec) - 1;
+M = length(t_vec) - 1;
 
-u = zeros(N+1,length(t_vec));
-
-% boundary conditions
-
-if BC == 1
-    u(1,:) =  sin(2*pi*t_vec/tau);
-elseif BC == 2
-    for t = 1:(t_max/h_t+1)
-        if mod(ceil(2*(t-1)*h_t/tau), 2) == 0  
-            u(1, t) = -1;
-        else 
-            u(1, t) = 1;
-        end
-    end
-else 
-    "fel initail krav valt"
-    return
-end
-
-% upwind
-u_upwind= u ;
-
-for t_i = 1:(t_max/h_t)
-    for x_i = 2:(N+1)
-        u_upwind(x_i,t_i+1)=(1-sigm)*u_upwind(x_i,t_i)...
-            + sigm*u_upwind(x_i-1,t_i);
-    end
-end
-
-
-figure(1)
-up_plot=plot(x_vec,u_upwind(:,end));
-%plot(x_vec,u(1,:))
-hold on
-
-
+% Upwind
+u_upwind = upwind(u0, sigma, N, M);
 
 % Lax-Fredrich
-%första index är rum andra är tid
-u_fred = u;
-
-for t_i = 1:(t_max/h_t)
-    for x_i = 2:N
-        u_fred(x_i,t_i+1)=(u_fred(x_i-1,t_i)+u_fred(x_i+1,t_i))/2 ...
-            -(sigm/2)*(u_fred(x_i+1,t_i) -u_fred(x_i-1,t_i));
-    end
-    u_fred(N+1,t_i+1)= 2*u_fred(N,t_i+1)-u_fred(N-1,t_i+1); 
-end
-
-fred_plot=plot(x_vec, u_fred(1:(N+1),end));
-hold on
+u_fred = lax_fredrich(u0, sigma, N, M);
 
 % Lax Wendroff
-u_wen=u;
-
-for t_i = 1:(t_max/h_t)
-    for x_i = 2:N
-        u_wen(x_i,t_i+1)= u_wen(x_i,t_i) ...
-            -(sigm/2)*(u_wen(x_i+1,t_i) -u_wen(x_i-1,t_i))...
-            +sigm^2/2*(u_wen(x_i+1,t_i) -2*u_wen(x_i,t_i)+u_wen(x_i-1,t_i));
-    end
-    u_wen(N+1,t_i+1)= 2*u_wen(N,t_i+1)-u_wen(N-1,t_i+1); 
-end
-
-wen_plot=plot(x_vec, u_wen(1:(N+1),end));
-legend([up_plot, fred_plot, wen_plot],"upwind","Freidrich","Wendroff")
+u_wen = lax_wendroff(u0, sigma, N, M);
 
 
-%% Part 2 !!! dododo !!!
+% figure('Name', 'Upwind')
+% plot(x_vec, u_upwind(:, end));
 
-% definiens definiedum
-T_cool=10; T_hot=100; L=3; k=0.2; v=1;
-t_max=5; x_max=L;
+% figure('Name', 'LaxFredrich')
+% plot(x_vec, u_fred(:, end));
 
-% The optimal solution 
-% sigm = 1.0;
-% h_x = 0.01;
-
-sigm = 0.2;
-h_x = 0.001;
-
-% sigm = 0.8;
-% h_x = 0.01;
-
-% sigm = 0.8;
-% h_x = 0.1/8;
-
-% sigm = 0.2;
-% h_x = 0.01;
-
-% sigm = 0.5;
-% h_x = 0.01;
+% figure('Name', 'LaxWendroff')
+% plot(x_vec, u_wen(:, end));
 
 
-N = x_max / h_x;
-h_t = (sigm/v) *  h_x;
-M = t_max / h_t;
-
-t_vec = 0:h_t:t_max;
-x_vec = 0:h_x:x_max;
-
-u = zeros(N+1,M+1);
-u(:,1)= T_cool;
-% a)
-
-for i=1:M+1
-    if (i-1)*h_t<=0.5
-        u(1,i)=T_cool+(T_hot-T_cool)*sin(pi*(i-1)*h_t);
-    elseif (i-1)*h_t<=2
-        u(1,i)=T_hot;
-    else
-        u(1,i)=T_hot+ T_cool*sin(4*pi*((i-1)*h_t-2));    
-    end
-end
-% Upwind
-
-u_upwind= u ;
-
-for t_i = 1:(t_max/h_t)
-    for x_i = 2:(N+1)
-        u_upwind(x_i,t_i+1)=(1-sigm)*u_upwind(x_i,t_i)...
-            + sigm*u_upwind(x_i-1,t_i)-h_t*(k*u_upwind(x_i,t_i)...
-            -k*T_cool);
-    end
-end
-
-%figure
-%surf(t_vec,x_vec,u_upwind)
+figure('Name', 'Upwind, LaxFredrich, LaxWendroff')
+up_plot = plot(x_vec, u_upwind(:, end));
+hold on
+fred_plot = plot(x_vec, u_fred(:, end));
+hold on
+wen_plot=plot(x_vec, u_wen(:, end));
+legend([up_plot, fred_plot, wen_plot], ...
+        "Upwind", "Lax Freidrich", "Lax Wendroff")
 
 
-%Wendroff
-u_wen=u;
+%% Part 2a 
 
-for t_i = 1:(t_max/h_t)
-    for x_i = 2:N
-        u_wen(x_i,t_i+1)=u_wen(x_i,t_i) - sigm*(1-k*h_t)/2*(u_wen(x_i+1,t_i)...
-            -u_wen(x_i-1,t_i))+ sigm^2/2*(u_wen(x_i+1,t_i)...
-            -2*u_wen(x_i,t_i)+u_wen(x_i-1,t_i))...
-            -h_t*(1-k*h_t/2)*(k*u_wen(x_i,t_i)-k*T_cool);
-    end
-    u_wen(N+1,t_i+1)= 2*u_wen(N,t_i+1)-u_wen(N-1,t_i+1); 
-end
-%figure
-%surf(t_vec,x_vec,u_wen)
+sigma = 1.0; 
+dx = 0.01;
 
-%b)
-figure(1)
-up_plot_25 = plot(x_vec, u_upwind(:, floor(2.5/h_t + 1)));
+[u0, x_vec, t_vec] = get_u0_part2(sigma, dx);
+N = length(x_vec) - 1;
+M = length(t_vec) - 1;
+
+u_upwind = upwind_part2(u0, sigma, N, M);
+u_wen = lax_wendroff_part2(u0, sigma, N, M);
+
+figure('Name', 'Upwind part 2')
+surf(t_vec, x_vec, u_upwind)
+figure('Name', 'Lax wendroff part 2')
+surf(t_vec, x_vec, u_wen)
+
+%% PART 2b
+
+% The upwind method smooths out the solutions 
+% The more accurate method is the lax wendroff method 
+% Higher sigma gives less smoothing for upwind
+%
+sigma = 1.0;
+dx = 0.01;
+% sigma = 1.0;
+% dx = 0.01;
+% sigma = 0.8;
+% dx = 0.01;
+% sigma = 0.5;
+% dx = 0.5;
+% sigma = 0.5;
+% dx = 0.2;
+
+[u0, x_vec, t_vec] = get_u0_part2(sigma, dx);
+N = length(x_vec) - 1;
+M = length(t_vec) - 1;
+
+u_upwind = upwind_part2(u0, sigma, N, M);
+u_wen = lax_wendroff_part2(u0, sigma, N, M);
+
+figure('Name', 't = 2.5')
+up_plot_25 = plot(x_vec, u_upwind(:, floor((M+1)/2)));
 hold on 
-wen_plot_25 = plot(x_vec, u_wen(:, floor(2.5/h_t + 1)));
-legend([up_plot_25, wen_plot_25], 'Upwind at t = 2.5', 'Wendroff at t = 2.5')
+wen_plot_25 = plot(x_vec, u_wen(:, floor((M+1)/2)));
+legend([up_plot_25, wen_plot_25], ...
+    'Upwind at t = 2.5', 'Wendroff at t = 2.5')
 hold off
 
-figure(2)
-up_plot_5 = plot(x_vec, u_upwind(:, floor(5/h_t + 1)));
+figure('Name', 't = 5')
+up_plot_5 = plot(x_vec, u_upwind(:, floor(M+1)));
 hold on 
-wen_plot_5 = plot(x_vec, u_wen(:, floor(5/h_t + 1)));
+wen_plot_5 = plot(x_vec, u_wen(:, floor(M+1)));
 legend([up_plot_5, wen_plot_5], 'Upwind at t = 5', 'Wendroff at t = 5')
+
+
+%%
+
+function [u, x_vec, t_vec] = get_u0(BC, sigm)
+ 
+    tau=1; a=1;  
+    
+    x_max= 2; 
+    t_max= 2*tau;     
+    N=100;
+
+    h_x = x_max/N;
+    h_t = (sigm/a) *  h_x;  
+    t_vec = 0:h_t:t_max;
+    x_vec = 0:h_x:x_max;    
+    
+    u = zeros(N+1,length(t_vec));
+    
+    % boundary conditions
+    if BC == "sin"
+        u(1,:) =  sin(2*pi*t_vec/tau);
+    elseif BC == "square"
+        for t = 1:(t_max/h_t+1)
+            if mod(ceil(2*(t-1)*h_t/tau), 2) == 0  
+                u(1, t) = -1;
+            else 
+                u(1, t) = 1;
+            end
+        end
+    else 
+        error("wrong bc, select 'sin' or 'square'")
+        return
+    end
+end
+
+
+function u = upwind(u0, sigm, N, M)
+    u = u0;
+    for t_i = 1:M
+        for x_i = 2:(N+1)
+            u(x_i,t_i+1)=(1-sigm)*u(x_i,t_i)...
+                + sigm*u(x_i-1,t_i);
+        end
+    end
+end
+
+function u = lax_fredrich(u0, sigm, N, M)
+    u = u0;
+    for t_i = 1:M
+        for x_i = 2:N
+            u(x_i,t_i+1)=(u(x_i-1,t_i)+u(x_i+1,t_i))/2 ...
+                -(sigm/2)*(u(x_i+1,t_i) -u(x_i-1,t_i));
+        end
+        u(N+1,t_i+1)= 2*u(N,t_i+1)-u(N-1,t_i+1); 
+    end
+end
+
+function u = lax_wendroff(u0, sigm, N, M)
+    u = u0;
+    for t_i = 1:M
+        for x_i = 2:N
+            u(x_i,t_i+1)= u(x_i,t_i) ...
+                -(sigm/2)*(u(x_i+1,t_i) -u(x_i-1,t_i))...
+                +sigm^2/2*(u(x_i+1,t_i) -2*u(x_i,t_i)+u(x_i-1,t_i));
+        end
+        u(N+1,t_i+1)= 2*u(N,t_i+1)-u(N-1,t_i+1); 
+    end
+end
+
+function [u, x_vec, t_vec] = get_u0_part2(sigm, h_x) 
+
+    T_cool = 10; 
+    T_hot = 100; 
+    L = 3; 
+    k = 0.2; 
+    v = 1;
+    t_max = 5; 
+    x_max = L;
+    
+    N = x_max / h_x;
+    h_t = (sigm/v) *  h_x;
+    M = t_max / h_t;
+
+    t_vec = 0:h_t:t_max;
+    x_vec = 0:h_x:x_max;
+
+    u = zeros(N+1, M+1);
+    u(:,1)= T_cool;
+
+    for i=1:M+1
+        if (i-1) * h_t <= 0.5
+            u(1,i) = T_cool + (T_hot-T_cool) * sin(pi*(i-1)*h_t);
+        elseif (i-1) * h_t<=2
+            u(1,i) = T_hot;
+        else
+            u(1,i) = T_hot + T_cool * sin(4*pi*((i-1)*h_t-2));    
+        end
+    end
+end
+
+function u = upwind_part2(u0, sigm, N, M)
+    k = 0.2; 
+    t_max = 5; 
+    T_cool = 10; 
+    u = u0;
+    for t_i = 1:M
+        for x_i = 2:(N+1)
+            u(x_i,t_i+1) = (1-sigm) * u(x_i,t_i) ...
+                + sigm*u(x_i-1,t_i) - t_max/M * (k*u(x_i,t_i) - k*T_cool);
+        end
+    end
+end
+
+function u = lax_wendroff_part2(u0, sigm, N, M)
+    k = 0.2; 
+    t_max = 5; 
+    T_cool = 10; 
+    h_t = t_max/M;
+    u = u0;
+    for t_i = 1:M
+        for x_i = 2:N
+            u(x_i,t_i+1) = u(x_i,t_i) - sigm * (1-k*h_t)/2 ...
+                * (u(x_i+1,t_i) - u(x_i-1,t_i)) ...
+                + sigm^2/2*(u(x_i+1,t_i)-2*u(x_i,t_i)+u(x_i-1,t_i))...
+                - h_t * (1-k*h_t/2) * (k*u(x_i,t_i)-k*T_cool);
+        end
+        u(N+1,t_i+1) = 2*u(N,t_i+1)-u(N-1,t_i+1); 
+    end
+end
