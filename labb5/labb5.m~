@@ -1,9 +1,9 @@
 %% PART 1
 
-% BC = "sin";
-BC = "square";
+BC = "sin";
+% BC = "square";
 
-sigma = 0.9;     
+sigma = -1;     
 
 % sigma is the courant number
 % All three methods are stable for 0 < sigma <= 1 
@@ -52,7 +52,7 @@ legend([up_plot, fred_plot, wen_plot], ...
 %% Part 2a 
 
 sigma = 1.0; 
-dx = 0.05;
+dx = 0.01;
 
 [u0, x_vec, t_vec] = get_u0_part2(sigma, dx);
 N = length(x_vec) - 1;
@@ -62,9 +62,8 @@ u_upwind = upwind_part2(u0, sigma, N, M);
 u_wen = lax_wendroff_part2(u0, sigma, N, M);
 
 figure('Name', 'Upwind part 2')
-subplot(1,2,1)
 surf(t_vec, x_vec, u_upwind)
-subplot(1,2,2)
+figure('Name', 'Lax wendroff part 2')
 surf(t_vec, x_vec, u_wen)
 
 %% PART 2b
@@ -73,14 +72,14 @@ surf(t_vec, x_vec, u_wen)
 % The more accurate method is the lax wendroff method 
 % Higher sigma gives less smoothing for upwind
 %
+sigma = 1.0;
+dx = 0.01;
 % sigma = 1.0;
-% dx = 0.01;
-% sigma = 0.1;
 % dx = 0.01;
 % sigma = 0.8;
 % dx = 0.01;
-sigma = 0.1;
-dx = 0.01;
+% sigma = 0.5;
+% dx = 0.5;
 % sigma = 0.5;
 % dx = 0.2;
 
