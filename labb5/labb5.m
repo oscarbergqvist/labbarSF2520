@@ -2,7 +2,7 @@
 
 %definiendum & definiens
 
-BC = 1; % sätts till nummer av rand värde
+BC = 2; % sätts till nummer av rand värde
 x_max= 2; tau=1; t_max= 2*tau; N=100;  a=1;
 sigm = 0.8; % sigma is the corrant number
 % startar på 0 i index och går till
@@ -91,8 +91,8 @@ t_max=5; x_max=L;
 % sigm = 1.0;
 % h_x = 0.01;
 
-sigm = 0.2;
-h_x = 0.001;
+sigm = 0.1;
+h_x = 0.1;
 
 % sigm = 0.8;
 % h_x = 0.01;
@@ -138,9 +138,8 @@ for t_i = 1:(t_max/h_t)
             -k*T_cool);
     end
 end
-
-%figure
-%surf(t_vec,x_vec,u_upwind)
+figure
+surf(t_vec,x_vec,u_upwind)
 
 
 %Wendroff
@@ -155,10 +154,10 @@ for t_i = 1:(t_max/h_t)
     end
     u_wen(N+1,t_i+1)= 2*u_wen(N,t_i+1)-u_wen(N-1,t_i+1); 
 end
-%figure
-%surf(t_vec,x_vec,u_wen)
+figure
+surf(t_vec,x_vec,u_wen)
 
-%b)
+% %b)
 figure(1)
 up_plot_25 = plot(x_vec, u_upwind(:, floor(2.5/h_t + 1)));
 hold on 
