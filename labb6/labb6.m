@@ -13,7 +13,7 @@ S2=load('convdiff.mat');
 A_confdiff= S2.A;
 
 %% Jacobian and CGD
-start("Jacobian",100,[20,1;10,3]')
+start("CGD",100,[20,1;10,3]')
 
 %% b)
 n_vec=8:15;
@@ -22,14 +22,15 @@ d_vec=1:4;
 diff_mat= zeros(length(n_vec),length(d_vec));
 for d=d_vec
     for n=n_vec 
-        tic
-        N=n^d;
+        
+        N=n^d
         A = lap(n,d);
         b=rand(N,1);    
         x= ones(N,1);
         r_old = b-A*x;
         p= r_old;
         loops=0;
+        tic
         while norm(A*x-b)/norm(b)>1e-10
           alpha= r_old'*r_old/(p'*A*p);
           x=x+alpha*p;
@@ -44,17 +45,19 @@ for d=d_vec
           r_old=r_new; 
 
         end
-        egen_tid=toc;
+        egen_tid=toc
 
         tic
         ans=A\b;
-        mat_tid=toc;
+        mat_tid=toc
         diff_norm=norm(ans - x);
         diff_mat(n-begin,d)=egen_tid-mat_tid;
     end
 end
 figure
 surf(d_vec,n_vec,diff_mat)
+xlabel('d')
+ylabel('n')
 %% part 2 a)
 spy(A_varm)
 B_varm= rand(size(A_varm,1),1);
@@ -65,7 +68,7 @@ tic
 back=A_varm\B_varm;
 back_time=toc 
 X_diff=norm(back-X)/length(X)
-plot(RESVEC)
+semilogy(RESVEC)
 
 %% 2 b) 
 M= diag(diag(A_varm));
